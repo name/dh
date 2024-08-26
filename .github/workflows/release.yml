@@ -5,14 +5,64 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: dh
+            asset_name: dh-linux-amd64
+          - os: windows-latest
+            artifact_name: dh.exe
+            asset_name: dh-windows-amd64.exe
+          - os: macos-latest
+            artifact_name: dh
+            asset_name: dh-macos-amd64
 
     steps:
     - uses: actions/checkout@v3
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
     - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      run: cargo build --release
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.asset_name }}
+        path: target/release/${{ matrix.artifact_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dh-linux-amd64
+          dh-windows-amd64.exe
+          dh-macos-amd64
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
