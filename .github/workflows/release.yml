@@ -5,49 +5,14 @@ on:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
-
 jobs:
   build:
-    name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: dh
-            asset_name: dh-linux-amd64
-          - os: windows-latest
-            artifact_name: dh.exe
-            asset_name: dh-windows-amd64.exe
-          - os: macos-latest
-            artifact_name: dh
-            asset_name: dh-macos-amd64
+
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --release
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.asset_name }}
-        path: target/release/${{ matrix.artifact_name }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          dh-linux-amd64
-          dh-windows-amd64.exe
-          dh-macos-amd64
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
