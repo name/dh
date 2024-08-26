@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
-trust-dns-resolver = "0.23.2"
+trust-dns-resolver = { version = "0.23.2", features = ["dns-over-https-rustls"] }
 prettytable-rs = "^0.10"
